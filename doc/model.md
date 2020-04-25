@@ -1,20 +1,21 @@
 # Model
 
-This document details the model to be used for the service.
+The data within the service can be split into three groups:
+
+* auth: system users
+* global: static objects used to define assets
+* assets: dynamic objects owned by users
+
 
 ## Auth
 
-The data within the service can be split into two groups:
+Common ownership of assets (eg, multi-user accounts) is not a requirement, we only need a single User object to manage
+both authentication and assets ownership. Concerning operation permissions, the only distinction we can make is whether
+the user can modify global objects or not (eg, administrator).
 
-* global: visible to all users, mostly static
-* assets: owned by users, mostly dynamic
+### User
 
-Global objects provide the foundation used to create user-owned assets, so they must be visible to all users but managed
-by administrators only. They include institutions (banks), financial instruments (currencies, stocks) and their quotes. 
-
-Assets are the actual values of the global instruments owned by the users, such as bank account balances and stocks 
-owned. They must be domain-restricted to the owners, invisible to any other user without exception (including 
-administrators).
+The user must have an *administrator* flag and a base currency to calculate assets total values.
 
 ```yaml
 User:
@@ -26,6 +27,12 @@ User:
 
 ## Global
 
+Global objects provide the foundation used to create user-owned assets, and include institutions (banks), financial 
+instruments (currencies, stocks) and their quotes. They must be visible by all users, but managed only by 
+administrators.
+
+### Institution
+
 Financial institutions are only used for information purposes, and can all be expressed with a single object.
 
 ```yaml
@@ -35,8 +42,10 @@ Institution:
   type: [bank, broker, exchange]
 ```
 
+### Instrument
+
 Financial instruments can also be of different types but in their case they can be heterogeneous, so they must be split
-in different subtypes. They hold the their values in time.
+in different subtypes. They must hold their values in time to provide gains and losses over time.
 
 ```yaml
 Instrument:
@@ -62,7 +71,12 @@ Security(Instrument):
 
 ## Assets
 
-Assets are grouped into accounts.
+Assets are the actual values of the global instruments owned by the users. They and must be domain-restricted to the 
+owners, invisible to any other user without exception (including administrators).
+
+### Account
+
+Accounts are the containers for user assets.
 
 ```yaml
 Account:
@@ -73,22 +87,23 @@ Account:
   code: string
   assets: list[Asset]
 
-AccountAsset:
+Asset:
   instrument: Instrument
   quantity: decimal
 ```
 
-Assets values must be modified using transactions. A transaction has a "value", which *should* be the equivalent to the 
-sum of its credits (and debits). However, due to the complexity of managing the different exchange rates used by 
-institutions I see no easy way to validate the ledger change, except counting any difference as a gain or cost.
+### Transaction
+
+A transaction is used to modify the assets, and it has a "value" that should be the equivalent to the sum of its credits 
+(and debits).
 
 ```yaml
 Transaction:
   category: choice
-  entries: list[TransactionEntry]
+  entries: list[Entry]
   value: Value
 
-TransactionEntry:
+Entry:
   type: choice[debit, credit]
   account: Account
   instrument: Instrument

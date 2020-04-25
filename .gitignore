@@ -4,5 +4,7 @@
 
 # Python env
 
+*.pyc
 /venv/
 /src/__pycache__/
+/test/__pycache__/

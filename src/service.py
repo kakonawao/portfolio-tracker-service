@@ -2,7 +2,7 @@ from fastapi import FastAPI
 
 from .config import database
 from .models.auth import User
-from .operations.auth import add_user
+from .operations.auth import add_user, authenticate, get_current_user
 
 
 # Service
@@ -20,3 +20,5 @@ async def startup_event():
 # Hook up resources to operations
 
 service.post('/users', response_model=User)(add_user)
+service.post('/sessions')(authenticate)
+service.get('/sessions/current', response_model=User)(get_current_user)

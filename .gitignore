@@ -1,8 +1,11 @@
 # IDE
-
 /.idea
 
 # Python env
-
+/.coverage
+/htmlcov/
 /venv/
 /src/__pycache__/
+/test/__pycache__/
+*.pyc
+.pytest_cache

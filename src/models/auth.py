@@ -1,6 +1,11 @@
 from pydantic import BaseModel
 
 
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
 class UserBase(BaseModel):
     username: str
     is_admin: bool = False

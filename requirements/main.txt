@@ -1,4 +1,7 @@
 dnspython3==1.15
 dnspython==1.16
 fastapi
+passlib[bcrypt]
+pyjwt
 pymongo
+python-multipart

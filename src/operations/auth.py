@@ -74,5 +74,15 @@ def resolve_user(token: str = Depends(oauth2_scheme)):
     return User(**user_data)
 
 
+def validate_admin_user(user: User = Depends(resolve_user)):
+    if not user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f'User is not authorised to perform the operation.'
+        )
+
+    return user
+
+
 def get_current_user(user: User = Depends(resolve_user)):
     return user

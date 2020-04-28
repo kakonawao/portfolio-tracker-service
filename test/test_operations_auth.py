@@ -6,8 +6,8 @@ from fastapi import HTTPException
 from jwt import PyJWTError
 from pymongo.errors import DuplicateKeyError
 
-from src.operations.auth import add_user, authenticate, resolve_user
-from .fixtures import normal_user_in, normal_user_input
+from src.operations.auth import add_user, authenticate, resolve_user, validate_admin_user
+from .fixtures import normal_user_in, normal_user_input, admin_user_input, admin_user_in
 
 
 @patch('src.operations.auth.database.users')
@@ -102,3 +102,13 @@ def test_resolve_user_success(mock_decode, mock_collection):
 
     assert user.username == 'pete'
     assert user.is_admin is False
+
+
+def test_validate_admin_user_failure(normal_user_in):
+    with pytest.raises(HTTPException):
+        validate_admin_user(normal_user_in)
+
+
+def test_validate_addmin_user_sucess(admin_user_in):
+    user = validate_admin_user(admin_user_in)
+    assert user.is_admin

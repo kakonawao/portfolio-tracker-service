@@ -34,5 +34,5 @@ jobs:
     - name: Test with pytest
       run: |
         pip install pytest coverage
-        coverage run --branch --source src --omit src/service.py -m pytest
-        coverage report -m --fail-under 80
+        coverage run -m pytest
+        coverage report

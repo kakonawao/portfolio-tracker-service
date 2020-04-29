@@ -35,5 +35,5 @@ def bank_input():
     }
 
 @pytest.fixture
-def institution_in(bank_input):
+def institution(bank_input):
     return Institution(**bank_input)

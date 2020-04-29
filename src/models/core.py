@@ -14,3 +14,19 @@ class Institution(BaseModel):
     name: str
     code: str
 
+
+class InstrumentType(str, Enum):
+    currency = 'currency'
+    index = 'index'
+    security = 'security'
+
+
+class InstrumentIn(BaseModel):
+    type: InstrumentType
+    description: str
+    symbol: str
+    exchange: str = None
+
+
+class Instrument(InstrumentIn):
+    exchange: Institution = None

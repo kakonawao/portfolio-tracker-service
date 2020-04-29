@@ -44,30 +44,32 @@ Institution:
 
 ### Instrument
 
-Financial instruments can also be of different types but in their case they can be heterogeneous, so they must be split
-in different subtypes. They must hold their values in time to provide gains and losses over time.
+Financial instruments can also be of different types, but again there's no need for subclasses.
 
 ```yaml
 Instrument:
   description: string
   symbol: string
   type: choice[currency, index, security]
-  values: map(date, InstrumentValue)
-
-InstrumentValue:
-  instrument: Instrument
-  value: decimal
-  
-Currency(Instrument):
-  ..
-  
-Index(Instrument):
-  ..
-
-Security(Instrument):
-  ..
   exchange: Institution(type=exchange)
 ```
+
+### Values
+
+Instrument values (currency rates, security quotes) need to be tracked by time, and they're given in *another 
+instrument*, probably always a currency.
+I am still deciding how to do this, but the following model could work.
+
+```yaml
+InstrumentValue:
+  date: date
+  instrument: Instrument
+  currency: Instrument(type=currency)
+  value: decimal
+```
+
+Optionally, we could include these nested inside the instrument documents, but they'll probably get too large.
+
 
 ## Assets
 

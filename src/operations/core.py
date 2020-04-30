@@ -24,6 +24,18 @@ def get_institutions(_: User = Depends(resolve_user)):
     return [i for i in database.institutions.find()]
 
 
+def modify_institution(code: str, institution: Institution, _: User = Depends(validate_admin_user)):
+    database.institutions.update_one(
+        {'code': code},
+        {'$set': institution.dict()}
+    )
+    return institution
+
+
+def delete_institution(code: str):
+    database.institutions.delete_one({'code': code})
+
+
 def add_instrument(instrument: InstrumentIn, _: User = Depends(validate_admin_user)):
     try:
         if instrument.type == InstrumentType.security:

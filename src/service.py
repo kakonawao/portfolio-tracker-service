@@ -7,7 +7,8 @@ from .models.auth import User
 from .models.core import Institution, Instrument
 from .models.assets import Account
 from .operations.auth import add_user, authenticate, get_current_user
-from .operations.core import add_institution, get_institutions, add_instrument, get_instruments
+from .operations.core import add_institution, get_institutions, modify_institution, delete_institution, \
+    add_instrument, get_instruments
 from .operations.assets import add_account, get_accounts
 
 
@@ -59,6 +60,8 @@ service.get('/sessions/current', response_model=User)(get_current_user)
 
 service.post('/institutions', response_model=Institution)(add_institution)
 service.get('/institutions', response_model=List[Institution])(get_institutions)
+service.put('/institutions/{code}', response_model=Institution)(modify_institution)
+service.delete('/institutions/{code}')(delete_institution)
 
 service.post('/instruments', response_model=Instrument)(add_instrument)
 service.get('/instruments', response_model=List[Instrument])(get_instruments)

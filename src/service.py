@@ -8,7 +8,7 @@ from .models.core import Institution, Instrument
 from .models.assets import Account
 from .operations.auth import add_user, authenticate, get_current_user
 from .operations.core import add_institution, get_institutions, add_instrument, get_instruments
-from .operations.assets import add_account
+from .operations.assets import add_account, get_accounts
 
 
 # Service
@@ -64,3 +64,4 @@ service.post('/instruments', response_model=Instrument)(add_instrument)
 service.get('/instruments', response_model=List[Instrument])(get_instruments)
 
 service.post('/accounts', response_model=Account)(add_account)
+service.get('/accounts', response_model=List[Account])(get_accounts)

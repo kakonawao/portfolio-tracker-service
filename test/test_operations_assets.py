@@ -4,7 +4,7 @@ from unittest.mock import patch
 from fastapi import HTTPException
 from pymongo.errors import DuplicateKeyError
 
-from src.operations.assets import add_account
+from src.operations.assets import add_account, get_accounts
 from .fixtures import account_bank, account_bank_data, account_bank_in, account_bank_input, \
     account_cash, account_cash_data, account_cash_in, account_cash_input, normal_user_in, normal_user_input, \
     bank_input
@@ -66,3 +66,14 @@ def test_add_account_bank_success(mock_collection, mock_institutions, account_ba
     assert res == account_bank.dict()
     mock_collection.insert_one.assert_called_once_with(account_bank_data)
     mock_institutions.find_one.assert_called_once_with({'code': account_bank.holder.code})
+
+
+@patch('src.operations.assets.database.accounts')
+def test_get_accounts(mock_collection, normal_user_in, account_cash_data, account_cash, account_bank_data, account_bank):
+    mock_collection.find.return_value = [account_cash_data, account_bank_data]
+
+    res = get_accounts(normal_user_in)
+
+    assert len(res) == 2
+    assert res[0] == account_cash
+    assert res[1] == account_bank

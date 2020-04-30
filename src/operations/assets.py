@@ -39,3 +39,7 @@ def add_account(account: AccountIn, user: User = Depends(resolve_user)):
         )
 
     return data
+
+
+def get_accounts(user: User = Depends(resolve_user)):
+    return [a for a in database.accounts.find({'owner': user.username})]

@@ -4,6 +4,7 @@ import pytest
 
 from src.models.auth import UserIn
 from src.models.core import Institution, InstitutionType, Instrument, InstrumentIn, InstrumentType
+from src.models.assets import Account, AccountIn, AccountType
 
 
 # Users
@@ -95,3 +96,54 @@ def security_in(security_input):
 @pytest.fixture
 def security(security_data):
     return Instrument(**security_data)
+
+
+# Assets
+
+@pytest.fixture
+def account_cash_input():
+    return {
+        'type': AccountType.cash,
+        'holder': 'potato',
+        'code': 'WALLET',
+        'description': 'My wallet'
+    }
+
+@pytest.fixture
+def account_cash_data(account_cash_input, normal_user_input):
+    data = copy.copy(account_cash_input)
+    data['owner'] = normal_user_input['username']
+    data['holder'] = None
+    return data
+
+@pytest.fixture
+def account_cash_in(account_cash_input):
+    return AccountIn(**account_cash_input)
+
+@pytest.fixture
+def account_cash(account_cash_data):
+    return Account(**account_cash_data)
+
+@pytest.fixture
+def account_bank_input():
+    return {
+        'type': AccountType.current,
+        'holder': 'BOI',
+        'code': 'BOICA',
+        'description': 'My BOI current account'
+    }
+
+@pytest.fixture
+def account_bank_data(account_bank_input, normal_user_input, bank_input):
+    data = copy.copy(account_bank_input)
+    data['owner'] = normal_user_input['username']
+    data['holder'] = bank_input
+    return data
+
+@pytest.fixture
+def account_bank_in(account_bank_input):
+    return AccountIn(**account_bank_input)
+
+@pytest.fixture
+def account_bank(account_bank_data):
+    return Account(**account_bank_data)

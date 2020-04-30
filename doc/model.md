@@ -82,8 +82,8 @@ Accounts are the containers for user assets.
 
 ```yaml
 Account:
-  owner: User
-  type: choice[current, savings, loan]
+  owner: str
+  type: choice[current, savings, investment, null]
   holder: Institution(type=[bank, broker])
   name: string
   code: string

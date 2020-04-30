@@ -3,7 +3,7 @@ from enum import Enum
 from pydantic import BaseModel
 from pydantic.fields import Union
 
-from .core import Institution
+from .core import Institution, InstitutionType
 
 
 class AccountType(str, Enum):
@@ -11,6 +11,15 @@ class AccountType(str, Enum):
     current = 'current'
     savings = 'savings'
     investment = 'investment'
+
+    @property
+    def holder_type(self):
+        if self.value in (self.current, self.savings):
+            return InstitutionType.bank
+        elif self.value in (self.investment):
+            return InstitutionType.broker
+
+        return None
 
 
 class AccountIn(BaseModel):

@@ -4,7 +4,8 @@ from pymongo.errors import DuplicateKeyError
 from unittest.mock import patch
 
 from src.models.core import Instrument
-from src.operations.core import add_institution, get_institutions, add_instrument, get_instruments
+from src.operations.core import add_institution, get_institutions, modify_institution, delete_institution, \
+    add_instrument, get_instruments
 from .fixtures import admin_user_in, admin_user_input, bank, bank_input, currency, currency_input, \
     exchange, exchange_input, security, security_data, security_in, security_input
 
@@ -20,8 +21,8 @@ def test_add_institution_failure(collection_mock, bank):
 def test_add_institution_success(collection_mock, bank, bank_input):
     res = add_institution(bank)
 
-    collection_mock.insert_one.assert_called_once_with(bank_input)
     assert res == bank
+    collection_mock.insert_one.assert_called_once_with(bank_input)
 
 
 @patch('src.operations.core.database.institutions')
@@ -34,6 +35,23 @@ def test_get_institutions(collection_mock, bank_input, bank):
 
     assert len(res) == 1
     assert res[0] == bank
+
+
+@patch('src.operations.core.database.institutions')
+def test_modify_institution(collection_mock, bank_input, bank):
+    bank_input['name'] = 'Boys Over Internet'
+    bank.name = bank_input['name']
+    res = modify_institution(bank.code, bank)
+
+    assert res == bank
+    collection_mock.update_one.assert_called_once_with({'code': bank.code}, {'$set': bank_input})
+
+
+@patch('src.operations.core.database.institutions')
+def test_delete_institution(collection_mock, bank):
+    delete_institution(bank.code)
+
+    collection_mock.delete_one.assert_called_once_with({'code': bank.code})
 
 
 @patch('src.operations.core.database.institutions')

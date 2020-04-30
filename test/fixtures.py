@@ -43,6 +43,14 @@ def bank_input():
     }
 
 @pytest.fixture
+def broker_input():
+    return {
+        'type': InstitutionType.broker,
+        'name': 'Morgan Stanley',
+        'code': 'MS'
+    }
+
+@pytest.fixture
 def exchange_input():
     return {
         'type': InstitutionType.exchange,
@@ -53,6 +61,10 @@ def exchange_input():
 @pytest.fixture
 def bank(bank_input):
     return Institution(**bank_input)
+
+@pytest.fixture
+def broker(broker_input):
+    return Institution(**broker_input)
 
 @pytest.fixture
 def exchange(exchange_input):
@@ -147,3 +159,27 @@ def account_bank_in(account_bank_input):
 @pytest.fixture
 def account_bank(account_bank_data):
     return Account(**account_bank_data)
+
+@pytest.fixture
+def account_broker_input():
+    return {
+        'type': AccountType.investment,
+        'holder': 'MS',
+        'code': 'MSIP01',
+        'description': 'Morgan Stanley investment plan'
+    }
+
+@pytest.fixture
+def account_broker_data(account_broker_input, normal_user_input, broker_input):
+    data = copy.copy(account_broker_input)
+    data['owner'] = normal_user_input['username']
+    data['holder'] = broker_input
+    return data
+
+@pytest.fixture
+def account_broker_in(account_broker_input):
+    return AccountIn(**account_broker_input)
+
+@pytest.fixture
+def account_broker(account_broker_data):
+    return Account(**account_broker_data)

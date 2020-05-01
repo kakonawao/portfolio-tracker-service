@@ -127,6 +127,19 @@ def test_modify_currency_success(collection_mock, institutions_mock, currency_in
 
 @patch('src.operations.core.database.institutions')
 @patch('src.operations.core.database.instruments')
+def test_modify_security_failure(collection_mock, institutions_mock, security_in):
+    security_in.exchange = None
+
+    with pytest.raises(HTTPException):
+        modify_instrument(security_in.code, security_in)
+
+    # No DB ops done due to validation error
+    assert not collection_mock.insert_one.called
+    assert not institutions_mock.find_one.called
+
+
+@patch('src.operations.core.database.institutions')
+@patch('src.operations.core.database.instruments')
 def test_modify_security_success(collection_mock, institutions_mock, security_in, security):
     institutions_mock.find_one.return_value = security.exchange.dict(exclude_none=True)
     security_in.description = 'Amazon Inc'

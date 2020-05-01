@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from jwt import PyJWTError
 from pymongo.errors import DuplicateKeyError
 
-from src.operations.auth import add_user, authenticate, resolve_user, validate_admin_user
+from src.operations.auth import add_user, authenticate, resolve_user, validate_admin_user, get_current_user
 from .fixtures import normal_user_in, normal_user_input, admin_user_input, admin_user_in
 
 

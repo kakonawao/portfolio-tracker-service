@@ -1,10 +1,10 @@
 import pymongo
 from fastapi import FastAPI
-from pydantic.fields import List
+from pydantic.fields import List, Union
 
 from .config import database
 from .models.auth import User
-from .models.core import Institution, Instrument
+from .models.core import Institution, Instrument, Security
 from .models.assets import Account
 from .operations.auth import add_user, authenticate, get_current_user
 from .operations.core import add_institution, get_institutions, modify_institution, delete_institution, \
@@ -63,8 +63,8 @@ service.get('/institutions', response_model=List[Institution])(get_institutions)
 service.put('/institutions/{code}', response_model=Institution)(modify_institution)
 service.delete('/institutions/{code}')(delete_institution)
 
-service.post('/instruments', response_model=Instrument)(add_instrument)
-service.get('/instruments', response_model=List[Instrument])(get_instruments)
+service.post('/instruments', response_model=Union[Security, Instrument])(add_instrument)
+service.get('/instruments', response_model=List[Union[Security, Instrument]])(get_instruments)
 
 service.post('/accounts', response_model=Account)(add_account)
 service.get('/accounts', response_model=List[Account])(get_accounts)

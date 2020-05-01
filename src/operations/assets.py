@@ -9,14 +9,14 @@ from .auth import resolve_user
 
 def add_account(account: AccountIn, user: User = Depends(resolve_user)):
     try:
-        data = account.dict()
+        data = account.dict(exclude_none=True)
         data['owner'] = user.username
 
         if not account.type.holder_type:
-            data['holder'] = None
+            data.pop('holder', None)
 
         else:
-            if not data['holder']:
+            if not data.get('holder'):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f'Account holder is required for {account.type} account.'

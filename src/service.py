@@ -5,11 +5,11 @@ from pydantic.fields import List, Union
 from .config import database
 from .models.auth import User
 from .models.core import Institution, Instrument, Security
-from .models.assets import Account
+from .models.assets import FinancialAccount, CashAccount
 from .operations.auth import add_user, authenticate, get_current_user
 from .operations.core import add_institution, get_institutions, modify_institution, delete_institution, \
     add_instrument, get_instruments, modify_instrument, delete_instrument
-from .operations.assets import add_account, get_accounts
+from .operations.assets import add_account, get_accounts, modify_account, delete_account
 
 
 # Service
@@ -68,5 +68,7 @@ service.get('/instruments', response_model=List[Union[Security, Instrument]])(ge
 service.put('/instruments/{code}', response_model=Union[Security, Instrument])(modify_instrument)
 service.delete('/instruments/{code}')(delete_instrument)
 
-service.post('/accounts', response_model=Account)(add_account)
-service.get('/accounts', response_model=List[Account])(get_accounts)
+service.post('/accounts', response_model=Union[FinancialAccount, CashAccount])(add_account)
+service.get('/accounts', response_model=List[Union[FinancialAccount, CashAccount]])(get_accounts)
+service.put('/accounts/{code}', response_model=Union[FinancialAccount, CashAccount])(modify_account)
+service.delete('/accounts/{code}')(delete_account)

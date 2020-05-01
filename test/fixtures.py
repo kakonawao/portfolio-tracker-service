@@ -4,7 +4,7 @@ import pytest
 
 from src.models.auth import UserIn
 from src.models.core import Institution, InstitutionType, Instrument, InstrumentIn, InstrumentType, Security
-from src.models.assets import Account, AccountIn, AccountType
+from src.models.assets import AccountIn, AccountType, CashAccount, FinancialAccount
 
 
 # Users
@@ -129,7 +129,7 @@ def account_cash(account_cash_input, normal_user_input):
     data = copy.copy(account_cash_input)
     data['owner'] = normal_user_input['username']
     data['holder'] = None
-    return Account(**data)
+    return CashAccount(**data)
 
 @pytest.fixture
 def account_bank_input():
@@ -149,7 +149,7 @@ def account_bank(account_bank_input, normal_user_input, bank_input):
     data = copy.copy(account_bank_input)
     data['owner'] = normal_user_input['username']
     data['holder'] = bank_input
-    return Account(**data)
+    return FinancialAccount(**data)
 
 @pytest.fixture
 def account_broker_input():
@@ -169,4 +169,4 @@ def account_broker(account_broker_input, normal_user_input, broker_input):
     data = copy.copy(account_broker_input)
     data['owner'] = normal_user_input['username']
     data['holder'] = broker_input
-    return Account(**data)
+    return FinancialAccount(**data)

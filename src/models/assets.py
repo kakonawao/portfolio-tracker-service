@@ -22,13 +22,23 @@ class AccountType(str, Enum):
         return None
 
 
-class AccountIn(BaseModel):
+class Account(BaseModel):
     type: AccountType
-    holder: str = None
     code: str
     description: str
 
 
-class Account(AccountIn):
+class AccountIn(Account):
+    holder: str = None
+
+
+class OwnedAccount(Account):
     owner: str
-    holder: Union[None, Institution]
+
+
+class CashAccount(OwnedAccount):
+    type = AccountType.cash
+
+
+class FinancialAccount(OwnedAccount):
+    holder: Institution

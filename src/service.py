@@ -8,7 +8,7 @@ from .models.core import Institution, Instrument, Security
 from .models.assets import Account
 from .operations.auth import add_user, authenticate, get_current_user
 from .operations.core import add_institution, get_institutions, modify_institution, delete_institution, \
-    add_instrument, get_instruments
+    add_instrument, get_instruments, modify_instrument, delete_instrument
 from .operations.assets import add_account, get_accounts
 
 
@@ -65,6 +65,8 @@ service.delete('/institutions/{code}')(delete_institution)
 
 service.post('/instruments', response_model=Union[Security, Instrument])(add_instrument)
 service.get('/instruments', response_model=List[Union[Security, Instrument]])(get_instruments)
+service.put('/instruments/{code}', response_model=Union[Security, Instrument])(modify_instrument)
+service.delete('/instruments/{code}')(delete_instrument)
 
 service.post('/accounts', response_model=Account)(add_account)
 service.get('/accounts', response_model=List[Account])(get_accounts)

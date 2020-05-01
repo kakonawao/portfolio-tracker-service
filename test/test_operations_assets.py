@@ -6,9 +6,9 @@ from pymongo.errors import DuplicateKeyError
 
 from src.models.core import InstitutionType
 from src.operations.assets import add_account, get_accounts
-from .fixtures import account_bank, account_bank_data, account_bank_in, account_bank_input, \
-    account_cash, account_cash_data, account_cash_in, account_cash_input, normal_user_in, normal_user_input, \
-    bank_input, account_broker, account_broker_in, account_broker_data, account_broker_input, broker, broker_input
+from .fixtures import account_bank, account_bank_in, account_bank_input, account_cash, account_cash_in, \
+    account_cash_input, normal_user_in, normal_user_input, bank_input, account_broker, account_broker_in, \
+    account_broker_input, broker, broker_input
 
 
 @patch('src.operations.assets.database.institutions')
@@ -24,12 +24,11 @@ def test_add_account_cash_duplicate(mock_collection, mock_institutions, account_
 
 @patch('src.operations.assets.database.institutions')
 @patch('src.operations.assets.database.accounts')
-def test_add_account_cash_success(mock_collection, mock_institutions, account_cash_in, normal_user_in, account_cash,
-                                  account_cash_data):
+def test_add_account_cash_success(mock_collection, mock_institutions, account_cash_in, normal_user_in, account_cash):
     res = add_account(account_cash_in, normal_user_in)
 
-    assert res == account_cash
-    mock_collection.insert_one.assert_called_once_with(account_cash_data)
+    assert res == account_cash.dict(exclude_none=True)
+    mock_collection.insert_one.assert_called_once_with(account_cash.dict(exclude_none=True))
     assert not mock_institutions.find_one.called
 
 
@@ -61,37 +60,39 @@ def test_add_account_bank_holder_not_found(mock_collection, mock_institutions, a
 @patch('src.operations.assets.database.institutions')
 @patch('src.operations.assets.database.accounts')
 def test_add_account_bank_success(mock_collection, mock_institutions, account_bank_in, normal_user_in, account_bank,
-                                  account_bank_data, bank_input):
+                                  bank_input):
     mock_institutions.find_one.return_value = bank_input
 
     res = add_account(account_bank_in, normal_user_in)
 
     assert res == account_bank.dict()
-    mock_collection.insert_one.assert_called_once_with(account_bank_data)
+    mock_collection.insert_one.assert_called_once_with(account_bank.dict(exclude_none=True))
     mock_institutions.find_one.assert_called_once_with({'type': InstitutionType.bank, 'code': account_bank.holder.code})
 
 @patch('src.operations.assets.database.institutions')
 @patch('src.operations.assets.database.accounts')
 def test_add_account_broker_success(mock_collection, mock_institutions, account_broker_in, normal_user_in,
-                                    account_broker, account_broker_data, broker_input):
+                                    account_broker, broker_input):
     mock_institutions.find_one.return_value = broker_input
 
     res = add_account(account_broker_in, normal_user_in)
 
     assert res == account_broker.dict()
-    mock_collection.insert_one.assert_called_once_with(account_broker_data)
+    mock_collection.insert_one.assert_called_once_with(account_broker.dict(exclude_none=True))
     mock_institutions.find_one.assert_called_once_with(
         {'type': InstitutionType.broker, 'code': account_broker.holder.code}
     )
 
 
 @patch('src.operations.assets.database.accounts')
-def test_get_accounts(mock_collection, normal_user_in, account_cash_data, account_cash, account_bank_data,
-                      account_bank):
-    mock_collection.find.return_value = [account_cash_data, account_bank_data]
+def test_get_accounts(mock_collection, normal_user_in, account_cash, account_bank):
+    mock_collection.find.return_value = [
+        account_cash.dict(exclude_none=True),
+        account_bank.dict(exclude_none=True)
+    ]
 
     res = get_accounts(normal_user_in)
 
     assert len(res) == 2
-    assert res[0] == account_cash
-    assert res[1] == account_bank
+    assert res[0] == account_cash.dict(exclude_none=True)
+    assert res[1] == account_bank.dict(exclude_none=True)

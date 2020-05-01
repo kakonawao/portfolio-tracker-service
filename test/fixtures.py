@@ -3,7 +3,7 @@ import copy
 import pytest
 
 from src.models.auth import UserIn
-from src.models.core import Institution, InstitutionType, Instrument, InstrumentIn, InstrumentType
+from src.models.core import Institution, InstitutionType, Instrument, InstrumentIn, InstrumentType, Security
 from src.models.assets import Account, AccountIn, AccountType
 
 
@@ -91,23 +91,22 @@ def security_input():
     }
 
 @pytest.fixture
-def security_data(security_input, exchange_input):
-    data = copy.copy(security_input)
-    data['exchange'] = exchange_input
-    return data
+def currency_in(currency_input):
+    return InstrumentIn(**currency_input)
 
 @pytest.fixture
 def currency(currency_input):
-    return InstrumentIn(**currency_input)
-
+    return Instrument(**currency_input)
 
 @pytest.fixture
 def security_in(security_input):
     return InstrumentIn(**security_input)
 
 @pytest.fixture
-def security(security_data):
-    return Instrument(**security_data)
+def security(security_input, exchange_input):
+    data = copy.copy(security_input)
+    data['exchange'] = exchange_input
+    return Security(**data)
 
 
 # Assets
@@ -122,19 +121,15 @@ def account_cash_input():
     }
 
 @pytest.fixture
-def account_cash_data(account_cash_input, normal_user_input):
-    data = copy.copy(account_cash_input)
-    data['owner'] = normal_user_input['username']
-    data['holder'] = None
-    return data
-
-@pytest.fixture
 def account_cash_in(account_cash_input):
     return AccountIn(**account_cash_input)
 
 @pytest.fixture
-def account_cash(account_cash_data):
-    return Account(**account_cash_data)
+def account_cash(account_cash_input, normal_user_input):
+    data = copy.copy(account_cash_input)
+    data['owner'] = normal_user_input['username']
+    data['holder'] = None
+    return Account(**data)
 
 @pytest.fixture
 def account_bank_input():
@@ -146,19 +141,15 @@ def account_bank_input():
     }
 
 @pytest.fixture
-def account_bank_data(account_bank_input, normal_user_input, bank_input):
-    data = copy.copy(account_bank_input)
-    data['owner'] = normal_user_input['username']
-    data['holder'] = bank_input
-    return data
-
-@pytest.fixture
 def account_bank_in(account_bank_input):
     return AccountIn(**account_bank_input)
 
 @pytest.fixture
-def account_bank(account_bank_data):
-    return Account(**account_bank_data)
+def account_bank(account_bank_input, normal_user_input, bank_input):
+    data = copy.copy(account_bank_input)
+    data['owner'] = normal_user_input['username']
+    data['holder'] = bank_input
+    return Account(**data)
 
 @pytest.fixture
 def account_broker_input():
@@ -170,16 +161,12 @@ def account_broker_input():
     }
 
 @pytest.fixture
-def account_broker_data(account_broker_input, normal_user_input, broker_input):
-    data = copy.copy(account_broker_input)
-    data['owner'] = normal_user_input['username']
-    data['holder'] = broker_input
-    return data
-
-@pytest.fixture
 def account_broker_in(account_broker_input):
     return AccountIn(**account_broker_input)
 
 @pytest.fixture
-def account_broker(account_broker_data):
-    return Account(**account_broker_data)
+def account_broker(account_broker_input, normal_user_input, broker_input):
+    data = copy.copy(account_broker_input)
+    data['owner'] = normal_user_input['username']
+    data['holder'] = broker_input
+    return Account(**data)

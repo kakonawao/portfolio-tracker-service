@@ -4,12 +4,15 @@ from pydantic.fields import List, Union
 
 from .config import database
 from .models.auth import User
-from .models.core import Institution, Instrument, Security
-from .models.assets import FinancialAccount, CashAccount
+from .models.institutions import Institution
+from .models.instruments import Instrument, Security
+from .models.accounts import FinancialAccount, CashAccount
+from .models.transactions import Transaction
 from .operations.auth import add_user, authenticate, get_current_user
-from .operations.core import add_institution, get_institutions, modify_institution, delete_institution, \
-    add_instrument, get_instruments, modify_instrument, delete_instrument
-from .operations.assets import add_account, get_accounts, modify_account, delete_account
+from .operations.institutions import add_institution, get_institutions, modify_institution, delete_institution
+from .operations.instruments import add_instrument, get_instruments, modify_instrument, delete_instrument
+from .operations.accounts import add_account, get_accounts, modify_account, delete_account
+from .operations.transactions import add_transaction
 
 
 # Service
@@ -50,6 +53,13 @@ async def startup_event():
         ],
         unique=True
     )
+    database.transactions.create_index(
+        [
+            ('owner', pymongo.ASCENDING),
+            ('code', pymongo.ASCENDING)
+        ],
+        unique=True
+    )
 
 
 # Hook up resources to operations
@@ -72,3 +82,5 @@ service.post('/accounts', response_model=Union[FinancialAccount, CashAccount])(a
 service.get('/accounts', response_model=List[Union[FinancialAccount, CashAccount]])(get_accounts)
 service.put('/accounts/{code}', response_model=Union[FinancialAccount, CashAccount])(modify_account)
 service.delete('/accounts/{code}')(delete_account)
+
+service.post('/transactions', response_model=Transaction)(add_transaction)

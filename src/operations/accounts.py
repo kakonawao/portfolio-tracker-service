@@ -1,9 +1,10 @@
+
 from fastapi import Depends, HTTPException, status
 from pymongo.errors import DuplicateKeyError
 
 from ..config import database
 from ..models.auth import User
-from ..models.assets import AccountIn, AccountType
+from ..models.accounts import AccountIn
 from .auth import resolve_user
 
 
@@ -34,7 +35,7 @@ def get_accounts(user: User = Depends(resolve_user)):
 def modify_account(code: str, account: AccountIn, user: User = Depends(resolve_user)):
     try:
         data = _resolve_account_data(account, user)
-        database.accounts.update_one({'owner': user.username, 'code': code}, {'$set': data})
+        database.accounts.replace_one({'owner': user.username, 'code': code}, data)
 
     except ValueError as ve:
         raise HTTPException(
@@ -52,6 +53,7 @@ def delete_account(code: str, user: User = Depends(resolve_user)):
 def _resolve_account_data(account, user):
     data = account.dict(exclude_none=True)
     data['owner'] = user.username
+    data['assets'] = []
 
     if not account.type.holder_type:
         data.pop('holder', None)
@@ -72,4 +74,3 @@ def _resolve_account_data(account, user):
         data['holder'] = holder_data
 
     return data
-

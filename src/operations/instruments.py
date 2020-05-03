@@ -3,43 +3,16 @@ from pymongo.errors import DuplicateKeyError
 
 from src.config import database
 from .auth import validate_admin_user, resolve_user
+from ..dal import get_instrument_filter
 from ..models.auth import User
-from ..models.core import Institution, InstitutionType, InstrumentIn, InstrumentType
-
-
-def add_institution(institution: Institution, _: User = Depends(validate_admin_user)):
-    try:
-        database.institutions.insert_one(institution.dict(exclude_none=True))
-
-    except DuplicateKeyError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f'Institution with code {institution.code} already exists.'
-        )
-
-    return institution
-
-
-def get_institutions(_: User = Depends(resolve_user)):
-    return [i for i in database.institutions.find()]
-
-
-def modify_institution(code: str, institution: Institution, _: User = Depends(validate_admin_user)):
-    database.institutions.update_one(
-        {'code': code},
-        {'$set': institution.dict()}
-    )
-    return institution
-
-
-def delete_institution(code: str):
-    database.institutions.delete_one({'code': code})
+from ..models.institutions import InstitutionType
+from ..models.instruments import InstrumentIn, InstrumentType
 
 
 def add_instrument(instrument: InstrumentIn, _: User = Depends(validate_admin_user)):
     try:
         if instrument.type == InstrumentType.security:
-            _set_instrument_exchange(instrument)
+            _set_security_exchange(instrument)
 
         data = instrument.dict(exclude_none=True)
         database.instruments.insert_one(data)
@@ -67,12 +40,7 @@ def get_instruments(_: User = Depends(resolve_user)):
 def modify_instrument(code: str, instrument: InstrumentIn, _: User = Depends(validate_admin_user)):
     try:
         if instrument.type == InstrumentType.security:
-            exchange_code, symbol = code.split(':')
-            _set_instrument_exchange(instrument)
-
-        else:
-            exchange_code = None
-            symbol = code
+            _set_security_exchange(instrument)
 
     except ValueError as ve:
         raise HTTPException(
@@ -81,14 +49,11 @@ def modify_instrument(code: str, instrument: InstrumentIn, _: User = Depends(val
         )
 
     data = instrument.dict(exclude_none=True)
-    database.instruments.update_one(
-        {'exchange.code': exchange_code, 'symbol': symbol},
-        {'$set': data}
-    )
+    database.instruments.replace_one(get_instrument_filter(code), data)
     return data
 
 
-def _set_instrument_exchange(instrument):
+def _set_security_exchange(instrument):
     if not instrument.exchange:
         raise ValueError('Instrument of type security must have an exchange.')
 
@@ -102,10 +67,4 @@ def _set_instrument_exchange(instrument):
 
 
 def delete_instrument(code: str, _: User = Depends(validate_admin_user)):
-    if ':' in code:
-        exchange_code, symbol = code.split(':')
-    else:
-        exchange_code = None
-        symbol = code
-
-    database.instruments.delete_one({'exchange.code': exchange_code, 'symbol': symbol})
+    database.instruments.delete_one(get_instrument_filter(code))

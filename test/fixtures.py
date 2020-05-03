@@ -1,10 +1,13 @@
 import copy
+from datetime import datetime
 
 import pytest
 
 from src.models.auth import UserIn
-from src.models.core import Institution, InstitutionType, Instrument, InstrumentIn, InstrumentType, Security
-from src.models.assets import AccountIn, AccountType, CashAccount, FinancialAccount
+from src.models.institutions import Institution, InstitutionType
+from src.models.instruments import Instrument, InstrumentIn, InstrumentType, Security
+from src.models.accounts import AccountIn, AccountType, CashAccount, FinancialAccount
+from src.models.transactions import Transaction, TransactionIn, TransactionStatus
 
 
 # Users
@@ -129,6 +132,7 @@ def account_cash(account_cash_input, normal_user_input):
     data = copy.copy(account_cash_input)
     data['owner'] = normal_user_input['username']
     data['holder'] = None
+    data['assets'] = []
     return CashAccount(**data)
 
 @pytest.fixture
@@ -149,6 +153,7 @@ def account_bank(account_bank_input, normal_user_input, bank_input):
     data = copy.copy(account_bank_input)
     data['owner'] = normal_user_input['username']
     data['holder'] = bank_input
+    data['assets'] = []
     return FinancialAccount(**data)
 
 @pytest.fixture
@@ -169,4 +174,44 @@ def account_broker(account_broker_input, normal_user_input, broker_input):
     data = copy.copy(account_broker_input)
     data['owner'] = normal_user_input['username']
     data['holder'] = broker_input
+    data['assets'] = []
     return FinancialAccount(**data)
+
+
+# Transactions
+
+@pytest.fixture
+def transaction_input():
+    return {
+        'description': 'Initial money in my wallet',
+        'total': {
+            'instrument': 'EUR',
+            'quantity': 3.14
+        },
+        'entries': [{
+            'account': 'WALLET',
+            'balance': {
+                'instrument': 'EUR',
+                'quantity': 3.14
+            }
+        }]
+    }
+
+@pytest.fixture
+def transaction_in(transaction_input):
+    return TransactionIn(**transaction_input)
+
+@pytest.fixture
+def transaction(transaction_input, currency_input, account_cash_input, normal_user_input):
+    data = copy.copy(transaction_input)
+    data['owner'] = normal_user_input['username']
+    data['total']['instrument'] = currency_input
+    data['status'] = TransactionStatus.pending
+    data['entries'][0]['account'] = account_cash_input
+    data['entries'][0]['status'] = TransactionStatus.pending
+    data['entries'][0]['balance']['instrument'] = currency_input
+    data['code'] = datetime(2020, 4, 20, 4, 20).isoformat()[:19]
+    import pprint
+    print('///')
+    pprint.pprint(data)
+    return Transaction(**data)

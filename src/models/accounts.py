@@ -1,9 +1,10 @@
 from enum import Enum
 
 from pydantic import BaseModel
-from pydantic.fields import Union
+from pydantic.fields import List
 
-from .core import Institution, InstitutionType
+from .institutions import Institution, InstitutionType
+from .balances import Balance
 
 
 class AccountType(str, Enum):
@@ -34,6 +35,7 @@ class AccountIn(Account):
 
 class OwnedAccount(Account):
     owner: str
+    assets: List[Balance] = []
 
 
 class CashAccount(OwnedAccount):

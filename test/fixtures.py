@@ -99,7 +99,9 @@ def currency_in(currency_input):
 
 @pytest.fixture
 def currency(currency_input):
-    return Instrument(**currency_input)
+    data = copy.copy(currency_input)
+    data['code'] = currency_input['symbol']
+    return Instrument(**data)
 
 @pytest.fixture
 def security_in(security_input):
@@ -109,6 +111,7 @@ def security_in(security_input):
 def security(security_input, exchange_input):
     data = copy.copy(security_input)
     data['exchange'] = exchange_input
+    data['code'] = f'{exchange_input["code"]}:{data["symbol"]}'
     return Security(**data)
 
 
@@ -202,16 +205,13 @@ def transaction_in(transaction_input):
     return TransactionIn(**transaction_input)
 
 @pytest.fixture
-def transaction(transaction_input, currency_input, account_cash_input, normal_user_input):
+def transaction(transaction_input, currency, account_cash_input, normal_user_input):
     data = copy.copy(transaction_input)
     data['owner'] = normal_user_input['username']
-    data['total']['instrument'] = currency_input
+    data['total']['instrument'] = currency.dict(exclude_none=True)
     data['status'] = TransactionStatus.pending
     data['entries'][0]['account'] = account_cash_input
     data['entries'][0]['status'] = TransactionStatus.pending
-    data['entries'][0]['balance']['instrument'] = currency_input
+    data['entries'][0]['balance']['instrument'] = currency.dict(exclude_none=True)
     data['code'] = datetime(2020, 4, 20, 4, 20).isoformat()[:19]
-    import pprint
-    print('///')
-    pprint.pprint(data)
     return Transaction(**data)

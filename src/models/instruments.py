@@ -11,28 +11,20 @@ class InstrumentType(str, Enum):
     security = 'security'
 
 
-class Instrument(BaseModel):
+class InstrumentBase(BaseModel):
     type: InstrumentType
     description: str
     symbol: str
 
-    @property
-    def code(self):
-        return self.symbol
 
-
-class InstrumentIn(Instrument):
+class InstrumentIn(InstrumentBase):
     exchange: str = None
 
-    @property
-    def code(self):
-        return f'{self.exchange}:{self.symbol}' if self.type == self.type.security else f'{self.symbol}'
+
+class Instrument(InstrumentBase):
+    code: str
 
 
 class Security(Instrument):
     type = InstrumentType.security
     exchange: Institution
-
-    @property
-    def code(self):
-        return f'{self.exchange.code}:{self.symbol}'

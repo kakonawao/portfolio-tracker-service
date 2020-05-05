@@ -3,7 +3,6 @@ from datetime import datetime
 from fastapi import Depends, HTTPException, status
 
 from ..config import database
-from ..dal import get_instrument_filter
 from ..models.auth import User
 from ..models.accounts import Account
 from ..models.transactions import TransactionIn, TransactionStatus
@@ -17,9 +16,7 @@ def add_transaction(transaction: TransactionIn, user: User = Depends(resolve_use
         data['status'] = TransactionStatus.pending
         data['code'] = datetime.utcnow().isoformat()[:19]
         data['entries'] = [_resolve_entry_data(entry, user) for entry in transaction.entries]
-        data['total']['instrument'] = database.instruments.find_one(
-            get_instrument_filter(transaction.total.instrument)
-        )
+        data['total']['instrument'] = database.instruments.find_one({'code': transaction.total.instrument})
         database.transactions.insert_one(data)
 
     except ValueError as ve:
@@ -36,7 +33,7 @@ def _resolve_entry_data(entry, user):
     if not account:
         raise ValueError(f'Account with code {entry.account} not found.')
 
-    instrument = database.instruments.find_one(get_instrument_filter(entry.balance.instrument))
+    instrument = database.instruments.find_one({'code': entry.balance.instrument})
     if not instrument:
         raise ValueError(f'Instrument with code {entry.balance.instrument} not found.')
 

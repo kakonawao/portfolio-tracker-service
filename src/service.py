@@ -40,8 +40,7 @@ async def startup_event():
 
     database.instruments.create_index(
         [
-            ('exchange.code', pymongo.ASCENDING),
-            ('symbol', pymongo.ASCENDING)
+            ('code', pymongo.ASCENDING)
         ],
         unique=True
     )
@@ -53,6 +52,7 @@ async def startup_event():
         ],
         unique=True
     )
+
     database.transactions.create_index(
         [
             ('owner', pymongo.ASCENDING),

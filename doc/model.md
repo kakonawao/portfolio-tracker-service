@@ -44,14 +44,22 @@ Institution:
 
 ### Instrument
 
-Financial instruments can also be of different types, but again there's no need for subclasses.
+Financial instruments can also be of different types, but the only subclass we need to differentiate is Security because
+it has an extra field (exchange). The attribute code must not be input (only as resource identifier), it must be 
+calculated based on the instrument symbol and its exchange (if any).
 
 ```yaml
 Instrument:
   description: string
   symbol: string
+  code: string
   type: choice[currency, index, security]
+ 
+Security(Instrument):
+  ..
+  type: security
   exchange: Institution(type=exchange)
+
 ```
 
 ### Values

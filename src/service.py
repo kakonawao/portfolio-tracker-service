@@ -12,7 +12,7 @@ from .operations.auth import add_user, authenticate, get_current_user
 from .operations.institutions import add_institution, get_institutions, modify_institution, delete_institution
 from .operations.instruments import add_instrument, get_instruments, modify_instrument, delete_instrument
 from .operations.accounts import add_account, get_accounts, modify_account, delete_account
-from .operations.transactions import add_transaction
+from .operations.transactions import add_transaction, get_transactions, complete_transaction
 
 
 # Service
@@ -84,3 +84,5 @@ service.put('/accounts/{code}', response_model=Union[FinancialAccount, CashAccou
 service.delete('/accounts/{code}')(delete_account)
 
 service.post('/transactions', response_model=Transaction)(add_transaction)
+service.get('/transactions', response_model=List[Transaction])(get_transactions)
+service.put('/transactions/{code}/complete', response_model=Transaction)(complete_transaction)

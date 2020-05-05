@@ -32,6 +32,7 @@ class TransactionIn(BaseModel):
 
 class Transaction(TransactionIn):
     owner: str
+    code: str
     status: TransactionStatus
     total: Balance
     entries: List[TransactionEntry]

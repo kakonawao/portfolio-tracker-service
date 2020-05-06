@@ -48,11 +48,15 @@ def add_instrument(instrument: InstrumentIn, _: User = Depends(validate_admin_us
     return data
 
 
-def get_instruments(_: User = Depends(resolve_user)):
-    return [i for i in database.instruments.find().sort(
+def get_instruments(_: User = Depends(resolve_user), t: InstrumentType = None):
+    filters = {}
+    if t:
+        filters['type'] = t
+
+    return [i for i in database.instruments.find(filters).sort(
         [
             ('type', pymongo.ASCENDING),
-            ('symbol', pymongo.ASCENDING)
+            ('code', pymongo.ASCENDING)
         ]
     )]
 

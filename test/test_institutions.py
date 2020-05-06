@@ -3,8 +3,9 @@ from fastapi import HTTPException
 from pymongo.errors import DuplicateKeyError
 from unittest.mock import patch
 
+from src.models.institutions import InstitutionType
 from src.operations.institutions import add_institution, get_institutions, modify_institution, delete_institution
-from .fixtures import bank, bank_input
+from .fixtures import bank, bank_input, broker, broker_input, normal_user, normal_user_input
 
 
 @patch('src.operations.institutions.database.institutions')
@@ -23,15 +24,31 @@ def test_add_institution_success(collection_mock, bank):
 
 
 @patch('src.operations.institutions.database.institutions')
-def test_get_institutions(collection_mock, bank):
+def test_get_institutions(collection_mock, bank, broker):
     collection_mock.find.return_value.sort.return_value = [
         bank.dict(exclude_none=True),
+        broker.dict(exclude_none=True)
     ]
 
     res = get_institutions()
 
+    assert len(res) == 2
+    assert res[0] == bank
+    assert res[1] == broker
+    collection_mock.find.assert_called_once_with({})
+
+
+@patch('src.operations.institutions.database.institutions')
+def test_get_institutions_by_type(collection_mock, bank, normal_user):
+    collection_mock.find.return_value.sort.return_value = [
+        bank.dict(exclude_none=True),
+    ]
+
+    res = get_institutions(normal_user, InstitutionType.bank)
+
     assert len(res) == 1
     assert res[0] == bank
+    collection_mock.find.assert_called_once_with({'type': InstitutionType.bank})
 
 
 @patch('src.operations.institutions.database.institutions')

@@ -28,7 +28,7 @@ def admin_user_input(normal_user_input):
 
 
 @pytest.fixture
-def normal_user_in(normal_user_input):
+def normal_user(normal_user_input):
     return UserIn(**normal_user_input)
 
 

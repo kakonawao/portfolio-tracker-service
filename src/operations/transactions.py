@@ -75,8 +75,12 @@ def add_transaction(transaction: TransactionIn, user: User = Depends(resolve_use
     return data
 
 
-def get_transactions(user: User = Depends(resolve_user)):
-    return [t for t in database.transactions.find({'owner': user.username}).sort(
+def get_transactions(user: User = Depends(resolve_user), s: TransactionStatus = None):
+    filters = {'owner': user.username}
+    if s:
+        filters['status'] = s
+
+    return [t for t in database.transactions.find(filters).sort(
         [
             ('code', pymongo.DESCENDING)
         ]

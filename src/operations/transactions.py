@@ -47,6 +47,14 @@ def _update_account_balance(user: User, account: Account, balance: Balance):
     )
 
 
+def _revert_account_balance(user: User, account: Account, balance: Balance):
+    database.accounts.update_one(
+        {'owner': user.username, 'code': account.code},
+        {'$inc': {'assets.$[asset].quantity': -balance.quantity}},
+        array_filters=[{'asset.instrument.code': balance.instrument.code}]
+    )
+
+
 def add_transaction(transaction: TransactionIn, user: User = Depends(resolve_user)):
     try:
         data = transaction.dict(exclude_none=True)
@@ -66,22 +74,31 @@ def add_transaction(transaction: TransactionIn, user: User = Depends(resolve_use
     return data
 
 
-def complete_transaction(code: str, user: User = Depends(resolve_user)):
-    transaction_filters = {'owner': user.username, 'code': code}
-    doc = database.transactions.find_one(transaction_filters)
+def get_transactions(user: User = Depends(resolve_user)):
+    return [t for t in database.transactions.find({'owner': user.username})]
+
+
+def _get_transaction_for_processing(filters: dict, target_status: TransactionStatus):
+    doc = database.transactions.find_one(filters)
     if not doc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f'Transaction with code {code} not found.'
+            detail=f'Transaction {filters["code"]} not found.'
         )
 
-    if doc['status'] == TransactionStatus.completed:
+    if doc['status'] == target_status:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f'Transaction {code} is already complete.'
+            detail=f'Transaction {filters["code"]} is already {target_status}.'
         )
 
-    transaction = Transaction(**doc)
+    return Transaction(**doc)
+
+
+def complete_transaction(code: str, user: User = Depends(resolve_user)):
+    transaction_filters = {'owner': user.username, 'code': code}
+    transaction = _get_transaction_for_processing(transaction_filters, TransactionStatus.completed)
+
     for entry_n, entry in enumerate(transaction.entries):
         if entry.status != TransactionStatus.completed:
             # TODO: make this block atomic (see https://github.com/kakonawao/portfolio-tracker-service/issues/44)
@@ -97,9 +114,29 @@ def complete_transaction(code: str, user: User = Depends(resolve_user)):
         {'$set': {'status': TransactionStatus.completed}},
     )
     transaction.status = TransactionStatus.completed
-
     return transaction
 
 
-def get_transactions(user: User = Depends(resolve_user)):
-    return [t for t in database.transactions.find({'owner': user.username})]
+def cancel_transaction(code: str, user: User = Depends(resolve_user)):
+    transaction_filters = {'owner': user.username, 'code': code}
+    transaction = _get_transaction_for_processing(transaction_filters, TransactionStatus.cancelled)
+
+    for entry_n, entry in enumerate(transaction.entries):
+        if entry.status != TransactionStatus.cancelled:
+            # TODO: make this block atomic (see https://github.com/kakonawao/portfolio-tracker-service/issues/44)
+            if entry.status == TransactionStatus.completed:
+                # Entry already processed, need to revert it
+                _revert_account_balance(user, entry.account, entry.balance)
+
+            database.transactions.update_one(
+                transaction_filters,
+                {'$set': {f'entries.{entry_n}.status': TransactionStatus.cancelled}}
+            )
+            entry.status = TransactionStatus.cancelled
+
+    database.transactions.update_one(
+        transaction_filters,
+        {'$set': {'status': TransactionStatus.cancelled}},
+    )
+    transaction.status = TransactionStatus.cancelled
+    return transaction

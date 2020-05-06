@@ -223,7 +223,14 @@ def atm_extraction_input():
                 'account': 'WALLET',
                 'balance': {
                     'instrument': 'EUR',
-                    'quantity': 100
+                    'quantity': 50
+                }
+            },
+            {
+                'account': 'DEGIRO',
+                'balance': {
+                    'instrument': 'EUR',
+                    'quantity': 50
                 }
             },
         ]
@@ -236,7 +243,8 @@ def atm_extraction_in(atm_extraction_input):
 
 
 @pytest.fixture
-def atm_extraction(atm_extraction_input, currency, account_bank_input, account_cash_input, normal_user_input):
+def atm_extraction(atm_extraction_input, currency, account_bank_input, account_cash_input, account_broker_input,
+                   normal_user_input):
     data = copy.copy(atm_extraction_input)
     data['owner'] = normal_user_input['username']
     data['total']['instrument'] = currency.dict(exclude_none=True)
@@ -247,5 +255,8 @@ def atm_extraction(atm_extraction_input, currency, account_bank_input, account_c
     data['entries'][1]['account'] = account_cash_input
     data['entries'][1]['status'] = TransactionStatus.pending
     data['entries'][1]['balance']['instrument'] = data['total']['instrument']
+    data['entries'][2]['account'] = account_broker_input
+    data['entries'][2]['status'] = TransactionStatus.pending
+    data['entries'][2]['balance']['instrument'] = data['total']['instrument']
     data['code'] = datetime(2020, 4, 20, 4, 20).isoformat()[:19]
     return Transaction(**data)

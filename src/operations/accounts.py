@@ -1,4 +1,4 @@
-
+import pymongo
 from fastapi import Depends, HTTPException, status
 from pymongo.errors import DuplicateKeyError
 
@@ -29,7 +29,11 @@ def add_account(account: AccountIn, user: User = Depends(resolve_user)):
 
 
 def get_accounts(user: User = Depends(resolve_user)):
-    return [a for a in database.accounts.find({'owner': user.username})]
+    return [a for a in database.accounts.find({'owner': user.username}).sort(
+        [
+            ('code', pymongo.ASCENDING)
+        ]
+    )]
 
 
 def modify_account(code: str, account: AccountIn, user: User = Depends(resolve_user)):

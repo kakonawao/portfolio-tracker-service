@@ -1,3 +1,4 @@
+import pymongo
 from fastapi import HTTPException, status, Depends
 from pymongo.errors import DuplicateKeyError
 
@@ -21,7 +22,12 @@ def add_institution(institution: Institution, _: User = Depends(validate_admin_u
 
 
 def get_institutions(_: User = Depends(resolve_user)):
-    return [i for i in database.institutions.find()]
+    return [i for i in database.institutions.find().sort(
+        [
+            ('type', pymongo.ASCENDING),
+            ('code', pymongo.ASCENDING)
+        ]
+    )]
 
 
 def modify_institution(code: str, institution: Institution, _: User = Depends(validate_admin_user)):

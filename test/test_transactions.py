@@ -159,7 +159,7 @@ def test_complete_transaction_full(mock_collection, mock_accounts, atm_extractio
 
 @patch('src.operations.transactions.database.transactions')
 def test_get_transactions(mock_collection, atm_extraction, normal_user_in):
-    mock_collection.find.return_value = [atm_extraction.dict(exclude_none=True)]
+    mock_collection.find.return_value.sort.return_value = [atm_extraction.dict(exclude_none=True)]
 
     res = get_transactions(normal_user_in)
 

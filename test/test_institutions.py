@@ -24,7 +24,7 @@ def test_add_institution_success(collection_mock, bank):
 
 @patch('src.operations.institutions.database.institutions')
 def test_get_institutions(collection_mock, bank):
-    collection_mock.find.return_value = [
+    collection_mock.find.return_value.sort.return_value = [
         bank.dict(exclude_none=True),
     ]
 

@@ -1,3 +1,4 @@
+import pymongo
 from fastapi import HTTPException, status, Depends
 from pymongo.errors import DuplicateKeyError
 
@@ -49,7 +50,12 @@ def add_instrument(instrument: InstrumentIn, _: User = Depends(validate_admin_us
 
 
 def get_instruments(_: User = Depends(resolve_user)):
-    return [i for i in database.instruments.find()]
+    return [i for i in database.instruments.find().sort(
+        [
+            ('type', pymongo.ASCENDING),
+            ('symbol', pymongo.ASCENDING)
+        ]
+    )]
 
 
 def modify_instrument(code: str, instrument: InstrumentIn, _: User = Depends(validate_admin_user)):

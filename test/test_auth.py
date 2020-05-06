@@ -7,28 +7,28 @@ from jwt import PyJWTError
 from pymongo.errors import DuplicateKeyError
 
 from src.operations.auth import add_user, authenticate, resolve_user, validate_admin_user, get_current_user
-from .fixtures import normal_user_in, normal_user_input, admin_user_input, admin_user_in
+from .fixtures import normal_user, normal_user_input, admin_user_input, admin_user_in
 
 
 @patch('src.operations.auth.database.users')
-def test_add_user_failure(mock_collection, normal_user_in):
+def test_add_user_failure(mock_collection, normal_user):
     mock_collection.insert_one.side_effect = DuplicateKeyError('repeated username')
     with pytest.raises(HTTPException):
-        add_user(normal_user_in)
+        add_user(normal_user)
 
 
 @patch('src.operations.auth.database.users')
 @patch('src.operations.auth.password_context')
-def test_add_user_success(mock_pw_ctx, mock_collection, normal_user_in):
+def test_add_user_success(mock_pw_ctx, mock_collection, normal_user):
     mock_pw_ctx.hash.return_value = 'myhashedpassword'
-    user = add_user(normal_user_in)
+    user = add_user(normal_user)
 
     mock_collection.insert_one.assert_called_once_with({
-        'username': normal_user_in.username,
+        'username': normal_user.username,
         'hashed_password': 'myhashedpassword',
-        'is_admin': normal_user_in.is_admin
+        'is_admin': normal_user.is_admin
     })
-    assert user == normal_user_in
+    assert user == normal_user
 
 
 @patch('src.operations.auth.database.users')
@@ -104,9 +104,9 @@ def test_resolve_user_success(mock_decode, mock_collection):
     assert user.is_admin is False
 
 
-def test_validate_admin_user_failure(normal_user_in):
+def test_validate_admin_user_failure(normal_user):
     with pytest.raises(HTTPException):
-        validate_admin_user(normal_user_in)
+        validate_admin_user(normal_user)
 
 
 def test_validate_addmin_user_sucess(admin_user_in):

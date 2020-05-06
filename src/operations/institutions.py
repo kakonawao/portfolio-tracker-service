@@ -5,7 +5,7 @@ from pymongo.errors import DuplicateKeyError
 from src.config import database
 from .auth import validate_admin_user, resolve_user
 from ..models.auth import User
-from ..models.institutions import Institution
+from ..models.institutions import Institution, InstitutionType
 
 
 def add_institution(institution: Institution, _: User = Depends(validate_admin_user)):
@@ -21,8 +21,12 @@ def add_institution(institution: Institution, _: User = Depends(validate_admin_u
     return institution
 
 
-def get_institutions(_: User = Depends(resolve_user)):
-    return [i for i in database.institutions.find().sort(
+def get_institutions(_: User = Depends(resolve_user), t: InstitutionType = None):
+    filters = {}
+    if t:
+        filters['type'] = t
+
+    return [i for i in database.institutions.find(filters).sort(
         [
             ('type', pymongo.ASCENDING),
             ('code', pymongo.ASCENDING)

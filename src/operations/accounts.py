@@ -4,7 +4,7 @@ from pymongo.errors import DuplicateKeyError
 
 from ..config import database
 from ..models.auth import User
-from ..models.accounts import AccountIn
+from ..models.accounts import AccountIn, AccountType
 from .auth import resolve_user
 
 
@@ -54,8 +54,12 @@ def add_account(account: AccountIn, user: User = Depends(resolve_user)):
     return data
 
 
-def get_accounts(user: User = Depends(resolve_user)):
-    return [a for a in database.accounts.find({'owner': user.username}).sort(
+def get_accounts(user: User = Depends(resolve_user), t: AccountType = None):
+    filters = {'owner': user.username}
+    if t:
+        filters['type'] = t
+
+    return [a for a in database.accounts.find(filters).sort(
         [
             ('code', pymongo.ASCENDING)
         ]

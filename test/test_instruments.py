@@ -4,9 +4,10 @@ from pymongo.errors import DuplicateKeyError
 from unittest.mock import patch
 
 from src.models.institutions import InstitutionType
+from src.models.instruments import InstrumentType
 from src.operations.instruments import add_instrument, get_instruments, modify_instrument, delete_instrument
-from .fixtures import bank, bank_input, currency, currency_in, currency_input, \
-    exchange, exchange_input, security, security_in, security_input
+from .fixtures import bank, bank_input, currency, currency_in, currency_input, exchange, exchange_input, security, \
+    security_in, security_input, normal_user, normal_user_input
 
 
 @patch('src.operations.instruments.database.institutions')
@@ -77,6 +78,21 @@ def test_get_instruments(collection_mock, currency, security):
     assert len(res) == 2
     assert res[0] == currency.dict(exclude_none=True)
     assert res[1] == security.dict(exclude_none=True)
+    collection_mock.find.assert_called_once_with({})
+
+
+@patch('src.operations.instruments.database.instruments')
+def test_get_instruments_by_type(collection_mock, currency, security, normal_user):
+    collection_mock.find.return_value.sort.return_value = [
+        currency.dict(exclude_none=True),
+    ]
+
+    res = get_instruments(normal_user, InstrumentType.currency)
+
+    assert len(res) == 1
+    assert res[0] == currency.dict(exclude_none=True)
+    collection_mock.find.assert_called_once_with({'type': InstrumentType.currency})
+
 
 @patch('src.operations.instruments.database.institutions')
 @patch('src.operations.instruments.database.instruments')

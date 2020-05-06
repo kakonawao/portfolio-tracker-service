@@ -42,8 +42,7 @@ def add_instrument(instrument: InstrumentIn, _: User = Depends(validate_admin_us
     except DuplicateKeyError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f'Institution with symbol {instrument.symbol} in exchange '
-                   f'{instrument.exchange} already exists.'
+            detail=f'Instrument with code {data["code"]} already exists.'
         )
 
     return data
@@ -68,7 +67,12 @@ def modify_instrument(code: str, instrument: InstrumentIn, _: User = Depends(val
             data['code'] = instrument.symbol
             data.pop('exchange', None)
 
-        database.instruments.replace_one({'code': code}, data)
+        res = database.instruments.replace_one({'code': code}, data)
+        if not res.modified_count:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f'Instrument with code {data["code"]} does not exist.'
+            )
 
     except ValueError as ve:
         raise HTTPException(

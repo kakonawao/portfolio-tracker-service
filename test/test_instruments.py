@@ -93,6 +93,16 @@ def test_modify_currency_success(collection_mock, institutions_mock, currency_in
     )
 
 
+@patch('src.operations.instruments.database.instruments')
+def test_modify_currency_not_found(collection_mock, currency_in, currency):
+    currency_in.description = 'EuroMoneda'
+    currency.description = currency_in.description
+    collection_mock.replace_one.return_value.modified_count = 0
+
+    with pytest.raises(HTTPException):
+        modify_instrument(currency_in.symbol, currency_in)
+
+
 @patch('src.operations.instruments.database.institutions')
 @patch('src.operations.instruments.database.instruments')
 def test_modify_security_failure(collection_mock, institutions_mock, security_in):

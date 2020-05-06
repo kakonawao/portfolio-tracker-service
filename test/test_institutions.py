@@ -44,6 +44,15 @@ def test_modify_institution(collection_mock, bank):
 
 
 @patch('src.operations.institutions.database.institutions')
+def test_modify_institution_not_found(collection_mock, bank):
+    bank.name = 'Boys Over Internet'
+    collection_mock.replace_one.return_value.modified_count = 0
+
+    with pytest.raises(HTTPException):
+        modify_institution(bank.code, bank)
+
+
+@patch('src.operations.institutions.database.institutions')
 def test_delete_institution(collection_mock, bank):
     delete_institution(bank.code)
 

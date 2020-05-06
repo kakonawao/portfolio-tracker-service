@@ -129,6 +129,19 @@ def test_modify_account_bank_success(mock_collection, mock_institutions, account
     mock_institutions.find_one.assert_called_once_with({'type': InstitutionType.bank, 'code': account_bank.holder.code})
 
 
+@patch('src.operations.accounts.database.institutions')
+@patch('src.operations.accounts.database.accounts')
+def test_modify_account_bank_not_found(mock_collection, mock_institutions, account_bank_in, normal_user_in,
+                                       account_bank, bank_input):
+    mock_institutions.find_one.return_value = bank_input
+    mock_collection.replace_one.return_value.modified_count = 0
+    account_bank_in.description = 'My old account with a new name'
+    account_bank.description = account_bank_in.description
+
+    with pytest.raises(HTTPException):
+        modify_account(account_bank_in.code, account_bank_in, normal_user_in)
+
+
 @patch('src.operations.accounts.database.accounts')
 def test_delete_account_bank_success(mock_collection, normal_user_in, account_bank):
     delete_account(account_bank.code, normal_user_in)

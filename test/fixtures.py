@@ -156,7 +156,7 @@ def account_cash(account_cash_input, normal_user_input):
 @pytest.fixture
 def account_bank_input():
     return {
-        'type': AccountType.current,
+        'type': AccountType.bank,
         'holder': 'BOI',
         'code': 'BOICA',
         'description': 'My BOI current account'

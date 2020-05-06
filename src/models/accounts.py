@@ -9,15 +9,14 @@ from .balances import Balance
 
 class AccountType(str, Enum):
     cash = 'cash'
-    current = 'current'
-    savings = 'savings'
+    bank = 'bank'
     investment = 'investment'
 
     @property
     def holder_type(self):
-        if self.value in (self.current, self.savings):
+        if self.value == self.bank:
             return InstitutionType.bank
-        elif self.value in (self.investment):
+        elif self.value == self.investment:
             return InstitutionType.broker
 
         return None

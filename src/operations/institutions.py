@@ -31,7 +31,12 @@ def get_institutions(_: User = Depends(resolve_user)):
 
 
 def modify_institution(code: str, institution: Institution, _: User = Depends(validate_admin_user)):
-    database.institutions.replace_one({'code': code}, institution.dict(exclude_none=True))
+    res = database.institutions.replace_one({'code': code}, institution.dict(exclude_none=True))
+    if not res.modified_count:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'Institution with code {code} does not exist.'
+        )
     return institution
 
 

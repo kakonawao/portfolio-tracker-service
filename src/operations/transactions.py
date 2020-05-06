@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import pymongo
 from fastapi import Depends, HTTPException, status
 
 from ..config import database
@@ -75,7 +76,11 @@ def add_transaction(transaction: TransactionIn, user: User = Depends(resolve_use
 
 
 def get_transactions(user: User = Depends(resolve_user)):
-    return [t for t in database.transactions.find({'owner': user.username})]
+    return [t for t in database.transactions.find({'owner': user.username}).sort(
+        [
+            ('code', pymongo.DESCENDING)
+        ]
+    )]
 
 
 def _get_transaction_for_processing(filters: dict, target_status: TransactionStatus):

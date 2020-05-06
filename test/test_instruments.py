@@ -67,7 +67,7 @@ def test_add_security_success(collection_mock, institutions_mock, exchange, secu
 
 @patch('src.operations.instruments.database.instruments')
 def test_get_instruments(collection_mock, currency, security):
-    collection_mock.find.return_value = [
+    collection_mock.find.return_value.sort.return_value = [
         currency.dict(exclude_none=True),
         security.dict(exclude_none=True),
     ]

@@ -86,7 +86,7 @@ def test_add_account_broker_success(mock_collection, mock_institutions, account_
 
 @patch('src.operations.accounts.database.accounts')
 def test_get_accounts(mock_collection, normal_user_in, account_cash, account_bank):
-    mock_collection.find.return_value = [
+    mock_collection.find.return_value.sort.return_value = [
         account_cash.dict(exclude_none=True),
         account_bank.dict(exclude_none=True)
     ]

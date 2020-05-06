@@ -33,11 +33,18 @@ async def startup_event():
 
     database.institutions.create_index(
         [
+            ('type', pymongo.ASCENDING),
             ('code', pymongo.ASCENDING)
         ],
         unique=True
     )
 
+    database.instruments.create_index(
+        [
+            ('type', pymongo.ASCENDING),
+            ('symbol', pymongo.ASCENDING)
+        ]
+    )
     database.instruments.create_index(
         [
             ('code', pymongo.ASCENDING)

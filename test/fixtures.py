@@ -5,7 +5,7 @@ import pytest
 
 from src.models.auth import UserIn
 from src.models.institutions import Institution, InstitutionType
-from src.models.instruments import Instrument, InstrumentIn, InstrumentType, Security
+from src.models.instruments import Instrument, InstrumentIn, InstrumentType, Security, ValueIn, Value
 from src.models.accounts import AccountIn, AccountType, CashAccount, FinancialAccount
 from src.models.transactions import Transaction, TransactionIn, TransactionStatus
 
@@ -260,3 +260,26 @@ def atm_extraction(atm_extraction_input, currency, account_bank_input, account_c
     data['entries'][2]['balance']['instrument'] = data['total']['instrument']
     data['code'] = datetime(2020, 4, 20, 4, 20).isoformat()[:19]
     return Transaction(**data)
+
+
+# Values
+@pytest.fixture
+def value_input():
+    return {
+        'values': {
+            'USD': 1.1,
+            'ARS': 70
+        }
+    }
+
+@pytest.fixture
+def value_in(value_input):
+    return ValueIn(**value_input)
+
+
+@pytest.fixture
+def value(value_input, currency):
+    data = copy.copy(value_input)
+    data['instrument'] = currency.dict()
+    data['date'] = datetime(2020, 4, 20)
+    return Value(**data)

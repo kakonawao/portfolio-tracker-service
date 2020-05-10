@@ -5,12 +5,13 @@ from pydantic.fields import List, Union
 from .config import database
 from .models.auth import User
 from .models.institutions import Institution
-from .models.instruments import Instrument, Security
+from .models.instruments import Instrument, Security, Value
 from .models.accounts import FinancialAccount, CashAccount
 from .models.transactions import Transaction
 from .operations.auth import add_user, authenticate, get_current_user
 from .operations.institutions import add_institution, get_institutions, modify_institution, delete_institution
-from .operations.instruments import add_instrument, get_instruments, modify_instrument, delete_instrument
+from .operations.instruments import add_instrument, get_instruments, modify_instrument, delete_instrument, set_value, \
+    get_value
 from .operations.accounts import add_account, get_accounts, modify_account, delete_account
 from .operations.transactions import add_transaction, get_transactions, complete_transaction, cancel_transaction
 
@@ -68,6 +69,14 @@ async def startup_event():
         unique=True
     )
 
+    database.values.create_index(
+        [
+            ('instrument.code', pymongo.ASCENDING),
+            ('date', pymongo.DESCENDING)
+        ],
+        unique=True
+    )
+
 
 # Hook up resources to operations
 
@@ -84,6 +93,8 @@ service.post('/instruments', response_model=Union[Security, Instrument])(add_ins
 service.get('/instruments', response_model=List[Union[Security, Instrument]])(get_instruments)
 service.put('/instruments/{code}', response_model=Union[Security, Instrument])(modify_instrument)
 service.delete('/instruments/{code}')(delete_instrument)
+service.put('/instruments/{code}/values/{date}', response_model=Value)(set_value)
+service.get('/instruments/{code}/values/{date}', response_model=Value)(get_value)
 
 service.post('/accounts', response_model=Union[FinancialAccount, CashAccount])(add_account)
 service.get('/accounts', response_model=List[Union[FinancialAccount, CashAccount]])(get_accounts)
@@ -94,3 +105,4 @@ service.post('/transactions', response_model=Transaction)(add_transaction)
 service.get('/transactions', response_model=List[Transaction])(get_transactions)
 service.put('/transactions/{code}/complete', response_model=Transaction)(complete_transaction)
 service.put('/transactions/{code}/cancel', response_model=Transaction)(cancel_transaction)
+

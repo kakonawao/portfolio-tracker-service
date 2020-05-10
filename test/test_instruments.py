@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 from fastapi import HTTPException
 from pymongo.errors import DuplicateKeyError
@@ -5,9 +7,10 @@ from unittest.mock import patch
 
 from src.models.institutions import InstitutionType
 from src.models.instruments import InstrumentType
-from src.operations.instruments import add_instrument, get_instruments, modify_instrument, delete_instrument
+from src.operations.instruments import add_instrument, get_instruments, modify_instrument, delete_instrument, \
+    set_value, get_value
 from .fixtures import bank, bank_input, currency, currency_in, currency_input, exchange, exchange_input, security, \
-    security_in, security_input, normal_user, normal_user_input
+    security_in, security_input, normal_user, normal_user_input, value, value_in, value_input
 
 
 @patch('src.operations.instruments.database.institutions')
@@ -166,3 +169,75 @@ def test_delete_security_success(collection_mock, security):
     collection_mock.delete_one.assert_called_once_with(
         {'code': security.code}
     )
+
+
+@patch('src.operations.instruments.database.instruments')
+@patch('src.operations.instruments.database.values')
+def test_set_value_invalid_date(collection_mock, instruments_mock, currency, value_in):
+    with pytest.raises(HTTPException):
+        set_value(currency.code, '20000-01-20', value_in)
+
+    assert not collection_mock.update_one.called
+    assert not instruments_mock.find_one.called
+
+
+@patch('src.operations.instruments.database.instruments')
+@patch('src.operations.instruments.database.values')
+def test_set_value_instrument_not_found(collection_mock, instruments_mock, currency, value_in, value):
+    instruments_mock.find_one.return_value = None
+
+    with pytest.raises(HTTPException):
+        set_value(currency.code, value.date.isoformat()[:10], value_in)
+
+    instruments_mock.find_one.assert_called_once_with({'code': currency.code})
+    assert not collection_mock.update_one.called
+
+
+@patch('src.operations.instruments.database.instruments')
+@patch('src.operations.instruments.database.values')
+def test_set_value_success(collection_mock, instruments_mock, currency, value_in, value):
+    instruments_mock.find_one.return_value = currency.dict()
+
+    res = set_value(currency.code, value.date.isoformat()[:10], value_in)
+
+    assert res == value.dict()
+    instruments_mock.find_one.assert_called_once_with({'code': currency.code})
+    collection_mock.update_one.assert_called_once_with(
+        {'instrument.code': currency.code, 'date': value.date},
+        {'$set':
+            {
+                'instrument': value.instrument.dict(),
+                'date': value.date,
+                **{f'values.{k}': v for k, v in value.values.items()}
+            }
+        },
+        upsert=True
+    )
+
+
+@patch('src.operations.instruments.database.values')
+def test_get_value_invalid_date(collection_mock, currency):
+    with pytest.raises(HTTPException):
+        get_value(currency.code, '20000-01-20')
+
+    assert not collection_mock.find_one.called
+
+
+@patch('src.operations.instruments.database.values')
+def test_get_value_not_found(collection_mock, currency):
+    collection_mock.find_one.return_value = None
+
+    with pytest.raises(HTTPException):
+        get_value(currency.code, '2000-01-20')
+
+    collection_mock.find_one.assert_called_once_with({'instrument.code': currency.code, 'date': datetime(2000, 1, 20)})
+
+
+@patch('src.operations.instruments.database.values')
+def test_get_value_success(collection_mock, value):
+    collection_mock.find_one.return_value = value.dict()
+
+    res = get_value(value.instrument.code, value.date.isoformat()[:10])
+
+    assert res == value
+    collection_mock.find_one.assert_called_once_with({'instrument.code': value.instrument.code, 'date': value.date})

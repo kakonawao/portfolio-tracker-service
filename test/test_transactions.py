@@ -169,7 +169,7 @@ def test_get_transactions(mock_collection, atm_extraction, normal_user):
 
 
 @patch('src.operations.transactions.database.transactions')
-def test_get_transactions_by_status(mock_collection, atm_extraction, normal_user):
+def test_get_transactions_by_status(mock_collection, normal_user):
     mock_collection.find.return_value.sort.return_value = []
 
     res = get_transactions(normal_user, TransactionStatus.cancelled)

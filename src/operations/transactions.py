@@ -14,11 +14,11 @@ from .auth import resolve_user
 def _resolve_entry_data(entry: TransactionEntryIn, user: User):
     account_data = database.accounts.find_one({'owner': user.username, 'code': entry.account})
     if not account_data:
-        raise ValueError(f'Account with code {entry.account} not found.')
+        raise ValueError(f'Account with code {entry.account} not found')
 
     instrument_data = database.instruments.find_one({'code': entry.balance.instrument})
     if not instrument_data:
-        raise ValueError(f'Instrument with code {entry.balance.instrument} not found.')
+        raise ValueError(f'Instrument with code {entry.balance.instrument} not found')
 
     data = entry.dict(exclude_none=True)
     data['status'] = TransactionStatus.pending
@@ -69,7 +69,7 @@ def add_transaction(transaction: TransactionIn, user: User = Depends(resolve_use
     except ValueError as ve:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f'{ve}'
+            detail=f'{ve}.'
         )
 
     return data

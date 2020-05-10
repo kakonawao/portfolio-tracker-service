@@ -65,19 +65,23 @@ Security(Instrument):
 ### Values
 
 Instrument values (currency rates, security quotes) need to be tracked by time, and they're given in *another 
-instrument*, probably always a currency.
-I am still deciding how to do this, but the following model could work.
+instrument*, probably always a currency. We can make the following assumptions to determine how many values to track:
+
+* Non-currency instruments need to track their value in their *price currency* per date
+* Currencies need to track their exchange rate to the *base currency* of users per date
+
+The following model, that tracks a map of instrument codes (currencies) and their rates, satisfies the previous 
+requirements:
 
 ```yaml
-InstrumentValue:
+Value:
   date: date
   instrument: Instrument
-  currency: Instrument(type=currency)
-  value: decimal
+  values: map[str, float]
 ```
 
-Optionally, we could include these nested inside the instrument documents, but they'll probably get too large.
-
+By using map we can manage mappings one at a time easily, and for example adding a EUR:USD rate without affecting the 
+rest of the existing mappings (a list would make that more difficult).
 
 ## Assets
 

@@ -18,7 +18,7 @@ def _resolve_account_data(account, user):
 
     else:
         if not data.get('holder'):
-            raise ValueError(f'Account holder is required for {account.type} account.')
+            raise ValueError(f'Account holder is required for {account.type} account')
 
         holder_data = database.institutions.find_one(
             {
@@ -28,7 +28,7 @@ def _resolve_account_data(account, user):
         )
         if not holder_data:
             raise ValueError(f'Institution of type {account.type.holder_type} with code '
-                             f'{account.holder} does not exist.')
+                             f'{account.holder} does not exist')
         data['holder'] = holder_data
 
     return data
@@ -42,7 +42,7 @@ def add_account(account: AccountIn, user: User = Depends(resolve_user)):
     except ValueError as ve:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f'{ve}'
+            detail=f'{ve}.'
         )
 
     except DuplicateKeyError:
@@ -80,7 +80,7 @@ def modify_account(code: str, account: AccountIn, user: User = Depends(resolve_u
     except ValueError as ve:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f'{ve}'
+            detail=f'{ve}.'
         )
 
     return data

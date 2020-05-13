@@ -44,7 +44,7 @@ def authenticate(form_data: OAuth2PasswordRequestForm = Depends()):
         'exp': datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     }
     token = encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
-    return {'access_token': token, 'token_type': 'bearer'}
+    return {'access_token': token, 'token_type': 'bearer', 'username': form_data.username}
 
 
 def resolve_user(token: str = Depends(oauth2_scheme)):

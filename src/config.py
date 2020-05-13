@@ -30,3 +30,8 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/sessions')
 password_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
+
+
+CORS_ORIGINS = (
+    'http://localhost:3000',
+)

@@ -62,7 +62,8 @@ def test_authenticate_success(mock_encode, mock_pw_ctx, mock_collection):
     token_data = authenticate(form_data)
     assert token_data == {
         'access_token': 'encodedtoken',
-        'token_type': 'bearer'
+        'token_type': 'bearer',
+        'username': 'pete'
     }
 
 

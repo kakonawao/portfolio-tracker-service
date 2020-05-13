@@ -1,8 +1,9 @@
 import pymongo
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic.fields import List, Union
 
-from .config import database
+from .config import database, CORS_ORIGINS
 from .models.auth import User
 from .models.institutions import Institution
 from .models.instruments import Instrument, Security, Value
@@ -19,6 +20,17 @@ from .operations.transactions import add_transaction, get_transactions, complete
 # Service
 
 service = FastAPI()
+
+
+# Add allowed CORS origins
+
+service.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=('*',),
+    allow_headers=('*',)
+)
 
 
 # Start/end event hooks

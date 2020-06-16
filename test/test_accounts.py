@@ -17,9 +17,10 @@ from .fixtures import account_bank, account_bank_in, account_bank_input, account
 def test_add_account_cash_duplicate(mock_collection, mock_institutions, account_cash_in, normal_user):
     mock_collection.insert_one.side_effect = DuplicateKeyError('account already exists')
 
-    with pytest.raises(HTTPException):
+    with pytest.raises(HTTPException) as excinfo:
         add_account(account_cash_in, normal_user)
 
+    assert excinfo.value.status_code == 400
     assert not mock_institutions.find_one.called
 
 
@@ -38,10 +39,11 @@ def test_add_account_cash_success(mock_collection, mock_institutions, account_ca
 def test_add_account_bank_missing_holder(mock_collection, mock_institutions, account_bank_in, normal_user):
     account_bank_in.holder = None
 
-    with pytest.raises(HTTPException):
+    with pytest.raises(HTTPException) as excinfo:
         add_account(account_bank_in, normal_user)
 
     # Holder validation failed before DB ops
+    assert excinfo.value.status_code == 400
     assert not mock_institutions.find_one.called
     assert not mock_collection.insert_one.called
 
@@ -51,9 +53,10 @@ def test_add_account_bank_missing_holder(mock_collection, mock_institutions, acc
 def test_add_account_bank_holder_not_found(mock_collection, mock_institutions, account_bank_in, normal_user):
     mock_institutions.find_one.return_value = None
 
-    with pytest.raises(HTTPException):
+    with pytest.raises(HTTPException) as excinfo:
         add_account(account_bank_in, normal_user)
 
+    assert excinfo.value.status_code == 400
     mock_institutions.find_one.assert_called_once_with({'type': InstitutionType.bank, 'code': account_bank_in.holder})
     assert not mock_collection.insert_one.called
 
@@ -118,10 +121,11 @@ def test_get_accounts_by_type(mock_collection, normal_user, account_cash):
 def test_modify_account_bank_missing_holder(mock_collection, mock_institutions, account_bank_in, normal_user):
     account_bank_in.holder = None
 
-    with pytest.raises(HTTPException):
+    with pytest.raises(HTTPException) as excinfo:
         modify_account(account_bank_in.code, account_bank_in, normal_user)
 
     # Holder validation failed before DB ops
+    assert excinfo.value.status_code == 400
     assert not mock_institutions.find_one.called
     assert not mock_collection.insert_one.called
 
@@ -153,8 +157,10 @@ def test_modify_account_bank_not_found(mock_collection, mock_institutions, accou
     account_bank_in.description = 'My old account with a new name'
     account_bank.description = account_bank_in.description
 
-    with pytest.raises(HTTPException):
+    with pytest.raises(HTTPException) as excinfo:
         modify_account(account_bank_in.code, account_bank_in, normal_user)
+
+    assert excinfo.value.status_code == 404
 
 
 @patch('src.operations.accounts.database.accounts')

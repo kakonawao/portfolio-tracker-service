@@ -11,8 +11,10 @@ from .fixtures import bank, bank_input, broker, broker_input, normal_user, norma
 @patch('src.operations.institutions.database.institutions')
 def test_add_institution_failure(collection_mock, bank):
     collection_mock.insert_one.side_effect = DuplicateKeyError('Bank already exists')
-    with pytest.raises(HTTPException):
+    with pytest.raises(HTTPException) as excinfo:
         add_institution(bank)
+
+    assert excinfo.value.status_code == 400
 
 
 @patch('src.operations.institutions.database.institutions')
@@ -65,8 +67,10 @@ def test_modify_institution_not_found(collection_mock, bank):
     bank.name = 'Boys Over Internet'
     collection_mock.replace_one.return_value.modified_count = 0
 
-    with pytest.raises(HTTPException):
+    with pytest.raises(HTTPException) as excinfo:
         modify_institution(bank.code, bank)
+
+    assert excinfo.value.status_code == 404
 
 
 @patch('src.operations.institutions.database.institutions')

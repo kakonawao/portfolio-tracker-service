@@ -1,9 +1,10 @@
 from datetime import datetime
 
 import pymongo
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 
 from ..config import database
+from ..exceptions import handled, ValidationError, NotFoundError
 from ..models.auth import User
 from ..models.balances import Balance
 from ..models.accounts import Account
@@ -11,20 +12,39 @@ from ..models.transactions import Transaction, TransactionIn, TransactionEntryIn
 from .auth import resolve_user
 
 
+def _get_transaction_for_processing(filters: dict, target_status: TransactionStatus):
+    doc = database.transactions.find_one(filters)
+    if not doc:
+        raise NotFoundError(f'Transaction {filters["code"]} not found.')
+
+    if doc['status'] == target_status:
+        raise ValidationError(f'Transaction {filters["code"]} is already {target_status}.')
+
+    return Transaction(**doc)
+
+
 def _resolve_entry_data(entry: TransactionEntryIn, user: User):
     account_data = database.accounts.find_one({'owner': user.username, 'code': entry.account})
     if not account_data:
-        raise ValueError(f'Account with code {entry.account} not found')
+        raise ValidationError(f'Account with code {entry.account} not found')
 
     instrument_data = database.instruments.find_one({'code': entry.balance.instrument})
     if not instrument_data:
-        raise ValueError(f'Instrument with code {entry.balance.instrument} not found')
+        raise ValidationError(f'Instrument with code {entry.balance.instrument} not found')
 
     data = entry.dict(exclude_none=True)
     data['status'] = TransactionStatus.pending
     data['account'] = Account(**account_data).dict(exclude_none=True)
     data['balance']['instrument'] = instrument_data
     return data
+
+
+def _revert_account_balance(user: User, account: Account, balance: Balance):
+    database.accounts.update_one(
+        {'owner': user.username, 'code': account.code},
+        {'$inc': {'assets.$[asset].quantity': -balance.quantity}},
+        array_filters=[{'asset.instrument.code': balance.instrument.code}]
+    )
 
 
 def _update_account_balance(user: User, account: Account, balance: Balance):
@@ -48,33 +68,20 @@ def _update_account_balance(user: User, account: Account, balance: Balance):
     )
 
 
-def _revert_account_balance(user: User, account: Account, balance: Balance):
-    database.accounts.update_one(
-        {'owner': user.username, 'code': account.code},
-        {'$inc': {'assets.$[asset].quantity': -balance.quantity}},
-        array_filters=[{'asset.instrument.code': balance.instrument.code}]
-    )
-
-
+@handled
 def add_transaction(transaction: TransactionIn, user: User = Depends(resolve_user)):
-    try:
-        data = transaction.dict(exclude_none=True)
-        data['owner'] = user.username
-        data['status'] = TransactionStatus.pending
-        data['code'] = datetime.utcnow().isoformat()[:19]
-        data['entries'] = [_resolve_entry_data(entry, user) for entry in transaction.entries]
-        data['total']['instrument'] = database.instruments.find_one({'code': transaction.total.instrument})
-        database.transactions.insert_one(data)
+    data = transaction.dict(exclude_none=True)
+    data['owner'] = user.username
+    data['status'] = TransactionStatus.pending
+    data['code'] = datetime.utcnow().isoformat()[:19]
+    data['entries'] = [_resolve_entry_data(entry, user) for entry in transaction.entries]
+    data['total']['instrument'] = database.instruments.find_one({'code': transaction.total.instrument})
 
-    except ValueError as ve:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f'{ve}.'
-        )
-
+    database.transactions.insert_one(data)
     return data
 
 
+@handled
 def get_transactions(user: User = Depends(resolve_user), s: TransactionStatus = None):
     filters = {'owner': user.username}
     if s:
@@ -87,23 +94,7 @@ def get_transactions(user: User = Depends(resolve_user), s: TransactionStatus = 
     )]
 
 
-def _get_transaction_for_processing(filters: dict, target_status: TransactionStatus):
-    doc = database.transactions.find_one(filters)
-    if not doc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f'Transaction {filters["code"]} not found.'
-        )
-
-    if doc['status'] == target_status:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f'Transaction {filters["code"]} is already {target_status}.'
-        )
-
-    return Transaction(**doc)
-
-
+@handled
 def complete_transaction(code: str, user: User = Depends(resolve_user)):
     transaction_filters = {'owner': user.username, 'code': code}
     transaction = _get_transaction_for_processing(transaction_filters, TransactionStatus.completed)
@@ -126,6 +117,7 @@ def complete_transaction(code: str, user: User = Depends(resolve_user)):
     return transaction
 
 
+@handled
 def cancel_transaction(code: str, user: User = Depends(resolve_user)):
     transaction_filters = {'owner': user.username, 'code': code}
     transaction = _get_transaction_for_processing(transaction_filters, TransactionStatus.cancelled)

@@ -19,9 +19,10 @@ def test_add_transaction_account_not_found(mock_collection, mock_accounts, mock_
     mock_accounts.find_one.return_value = None
     mock_instruments.find_one.return_value = currency.dict(exclude_none=True)
 
-    with pytest.raises(HTTPException):
+    with pytest.raises(HTTPException) as excinfo:
         add_transaction(atm_extraction_in, normal_user)
 
+    assert excinfo.value.status_code == 400
     assert not mock_collection.insert_one.called
 
 
@@ -33,9 +34,10 @@ def test_add_transaction_instrument_not_found(mock_collection, mock_accounts, mo
     mock_accounts.find_one.side_effect = [account_bank.dict(exclude_none=True), account_cash.dict(exclude_none=True)]
     mock_instruments.find_one.return_value = None
 
-    with pytest.raises(HTTPException):
+    with pytest.raises(HTTPException) as excinfo:
         add_transaction(atm_extraction_in, normal_user)
 
+    assert excinfo.value.status_code == 400
     assert not mock_collection.insert_one.called
 
 
@@ -65,8 +67,10 @@ def test_add_transaction_success(mock_collection, mock_accounts, mock_instrument
 def test_complete_transaction_not_found(mock_collection, atm_extraction, normal_user):
     mock_collection.find_one.return_value = None
 
-    with pytest.raises(HTTPException):
+    with pytest.raises(HTTPException) as excinfo:
         complete_transaction(atm_extraction.code, normal_user)
+
+    assert excinfo.value.status_code == 404
 
 
 @patch('src.operations.transactions.database.transactions')
@@ -75,8 +79,10 @@ def test_complete_transaction_completed(mock_collection, atm_extraction, normal_
     transaction_data['status'] = TransactionStatus.completed
     mock_collection.find_one.return_value = transaction_data
 
-    with pytest.raises(HTTPException):
+    with pytest.raises(HTTPException) as excinfo:
         complete_transaction(atm_extraction.code, normal_user)
+
+    assert excinfo.value.status_code == 400
 
 
 @patch('src.operations.transactions.database.accounts')

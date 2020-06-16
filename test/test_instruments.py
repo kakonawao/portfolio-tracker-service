@@ -17,9 +17,10 @@ from .fixtures import bank, bank_input, currency, currency_in, currency_input, e
 @patch('src.operations.instruments.database.instruments')
 def test_add_currency_failure(collection_mock, institutions_mock, currency_in):
     collection_mock.insert_one.side_effect = DuplicateKeyError('currency already exists')
-    with pytest.raises(HTTPException):
+    with pytest.raises(HTTPException) as excinfo:
         add_instrument(currency_in)
 
+    assert excinfo.value.status_code == 400
     assert not institutions_mock.find_one.called
 
 
@@ -38,9 +39,10 @@ def test_add_currency_success(collection_mock, institutions_mock, currency_in, c
 def test_add_security_exchange_missing(collection_mock, institutions_mock, security_in):
     security_in.exchange = None
 
-    with pytest.raises(HTTPException):
+    with pytest.raises(HTTPException) as excinfo:
         add_instrument(security_in)
 
+    assert excinfo.value.status_code == 400
     assert not collection_mock.insert_one.called
     assert not institutions_mock.find_one.called
 
@@ -50,9 +52,10 @@ def test_add_security_exchange_missing(collection_mock, institutions_mock, secur
 def test_add_security_exchange_not_found(collection_mock, institutions_mock, security_in):
     institutions_mock.find_one.return_value = None
 
-    with pytest.raises(HTTPException):
+    with pytest.raises(HTTPException) as excinfo:
         add_instrument(security_in)
 
+    assert excinfo.value.status_code == 400
     institutions_mock.find_one.assert_called_once_with({'code': security_in.exchange, 'type': InstitutionType.exchange})
     assert not collection_mock.insert_one.called
 
@@ -118,8 +121,10 @@ def test_modify_currency_not_found(collection_mock, currency_in, currency):
     currency.description = currency_in.description
     collection_mock.replace_one.return_value.modified_count = 0
 
-    with pytest.raises(HTTPException):
+    with pytest.raises(HTTPException) as excinfo:
         modify_instrument(currency_in.symbol, currency_in)
+
+    assert excinfo.value.status_code == 404
 
 
 @patch('src.operations.instruments.database.institutions')
@@ -127,10 +132,11 @@ def test_modify_currency_not_found(collection_mock, currency_in, currency):
 def test_modify_security_failure(collection_mock, institutions_mock, security_in):
     security_in.exchange = None
 
-    with pytest.raises(HTTPException):
+    with pytest.raises(HTTPException) as excinfo:
         modify_instrument(f'{security_in.exchange}:{security_in.symbol}', security_in)
 
     # No DB ops done due to validation error
+    assert excinfo.value.status_code == 400
     assert not collection_mock.insert_one.called
     assert not institutions_mock.find_one.called
 
@@ -174,9 +180,10 @@ def test_delete_security_success(collection_mock, security):
 @patch('src.operations.instruments.database.instruments')
 @patch('src.operations.instruments.database.values')
 def test_set_value_invalid_date(collection_mock, instruments_mock, currency, value_in):
-    with pytest.raises(HTTPException):
+    with pytest.raises(HTTPException) as excinfo:
         set_value(currency.code, '20000-01-20', value_in)
 
+    assert excinfo.value.status_code == 400
     assert not collection_mock.update_one.called
     assert not instruments_mock.find_one.called
 
@@ -186,9 +193,10 @@ def test_set_value_invalid_date(collection_mock, instruments_mock, currency, val
 def test_set_value_instrument_not_found(collection_mock, instruments_mock, currency, value_in, value):
     instruments_mock.find_one.return_value = None
 
-    with pytest.raises(HTTPException):
+    with pytest.raises(HTTPException) as excinfo:
         set_value(currency.code, value.date.isoformat()[:10], value_in)
 
+    assert excinfo.value.status_code == 404
     instruments_mock.find_one.assert_called_once_with({'code': currency.code})
     assert not collection_mock.update_one.called
 
@@ -217,9 +225,10 @@ def test_set_value_success(collection_mock, instruments_mock, currency, value_in
 
 @patch('src.operations.instruments.database.values')
 def test_get_value_invalid_date(collection_mock, currency):
-    with pytest.raises(HTTPException):
+    with pytest.raises(HTTPException) as excinfo:
         get_value(currency.code, '20000-01-20')
 
+    assert excinfo.value.status_code == 400
     assert not collection_mock.find_one.called
 
 
@@ -227,9 +236,10 @@ def test_get_value_invalid_date(collection_mock, currency):
 def test_get_value_not_found(collection_mock, currency):
     collection_mock.find_one.return_value = None
 
-    with pytest.raises(HTTPException):
+    with pytest.raises(HTTPException) as excinfo:
         get_value(currency.code, '2000-01-20')
 
+    assert excinfo.value.status_code == 404
     collection_mock.find_one.assert_called_once_with({'instrument.code': currency.code, 'date': datetime(2000, 1, 20)})
 
 
